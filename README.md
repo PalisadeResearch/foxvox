@@ -1,6 +1,6 @@
 # FoxVox: One Click to Alter Reality
 
-FoxVox is an open-source Chrome extension powered by GPT-4. It demonstrates how AI can be used to subtly manipulate the content you consume. It can manipulate how we see political figures, view controversial policies, and even slant entire news websites to reflect different biases.
+FoxVox is an open-source Chrome extension powered by GPT-4o. It demonstrates how AI can be used to subtly manipulate the content you consume. It can manipulate how we see political figures, view controversial policies, and even slant entire news websites to reflect different biases.
 
 ## Table of Contents
 - [Installation](#installation)
@@ -52,7 +52,7 @@ FoxVox is built using JavaScript, HTML, and CSS. It leverages the GPT-4o model t
 - **background.js**: 
     - Listens for tab updates and sends requests to the GPT-4o API to manipulate content.
     - Handles API responses and updates the web page content accordingly.
-    - Manages communication between the content scripts and the GPT-4 API.
+    - Manages communication between the content scripts and the GPT-4o API.
 
 - **popup.js**: 
     - Provides a user interface for the extension.
@@ -81,7 +81,7 @@ FoxVox is built using JavaScript, HTML, and CSS. It leverages the GPT-4o model t
 2. **Content Fetching and Manipulation**: 
     - When a user navigates to a new page, `background.js` captures the content tree via an injected script.
     - An algorithm finds optimal chunks to divide the content tree into that find optimum between minimising html code and maximising visible text while retaining the text size large enough for the model to be able to grasp context and do good generation.
-    - The content is sent to `generation.js`, which processes it and sends a request to the GPT-4 API.
+    - The content is sent to `generation.js`, which processes it and sends a request to the GPT-4o API.
     - The API response is received and processed by `generation.js`, which then updates the web page content.
 
 3. **Communication Between Background and Popup**: 
@@ -90,7 +90,7 @@ FoxVox is built using JavaScript, HTML, and CSS. It leverages the GPT-4o model t
     - `background.js` and `popup.js` communicate via Chrome's messaging API, with the state divided between them.
 
 4. **Content Generation**: 
-    - `generation.js` handles the logic for sending content to the GPT-4 API.
+    - `generation.js` handles the logic for sending content to the GPT-4o API.
     - It constructs the API request, sends the content, and processes the response. We use two requests per chunk of text, one for initial generation and one for improvement and polish.
     - The manipulated content is then injected back into the web page using the associated xpaths.
 
