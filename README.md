@@ -17,16 +17,19 @@ FoxVox is an open-source Chrome extension powered by GPT-4. It demonstrates how 
 ```bash
 git clone https://github.com/PalisadeResearch/foxvox.git
 cd foxvox
+```
 
 2. Install dependencies:
 
 ```bash
 npm install
+```
 
 3. Build the project:
 
 ```bash
 npm run build
+```
 
 4. Load the extension in Chrome:
     - Open Chrome and navigate to `chrome://extensions/`
