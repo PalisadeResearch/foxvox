@@ -100,6 +100,6 @@ FoxVox is built using JavaScript, HTML, and CSS. It leverages the GPT-4o model t
 
 ## Potential Improvements to this Project
 
-- [ ] **Improvement 1**: Make a stateless popup and assert UI from background. This will fix persistancy of the UI and leverage issues from the popup data being lost on closing it.
-- [ ] **Improvement 2**: Improve generation through better prompting, advanced generation techniques like CoT, RAG, ToT etc and better context utilisation -- including clustering of the text chunks that utilises semantic similarity and spatial locality.
-- [ ] **Improvement 3**: Improve UX through a dedicated server and google account authorisation / phone number authorisation to remove community key shenanigans.
+- [ ] Make a **stateless popup** and assert UI from background. This will fix persistancy of the UI and leverage issues from the popup data being lost on closing it.
+- [ ] Improve generation through **better prompting**, advanced **generation techniques** like CoT, RAG, ToT etc and better **context utilisation** -- including clustering of the text chunks that utilises semantic similarity and spatial locality.
+- [ ] Improve UX through a **dedicated server** and **google account authorisation** / **phone number authorisation** to remove community key shenanigans.
