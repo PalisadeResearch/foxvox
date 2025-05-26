@@ -2,36 +2,81 @@ import OpenAI from 'openai';
 import { Template, UserSettings } from './types';
 
 /**
- * Creates a completion request to OpenAI API
+ * Determines if a model uses the new parameter structure
+ */
+function isNewGenerationModel(model: string): boolean {
+  const newModels = ['o3', 'o4-mini', 'o1-preview', 'o1-mini'];
+  return newModels.includes(model);
+}
+
+/**
+ * Determines if a model is a reasoning model
+ */
+function isReasoningModel(model: string): boolean {
+  return model.startsWith('o3') || model.startsWith('o1') || model.startsWith('o4');
+}
+
+/**
+ * Creates a completion request with proper function calling support for all models
  */
 async function completion(
   openai: OpenAI,
   context: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
   userSettings: UserSettings
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
-  return openai.chat.completions.create({
-    model: userSettings.model as any,
+  const isNewModel = isNewGenerationModel(userSettings.model);
+
+  // Base configuration with function calling (supported by all models including reasoning models)
+  const baseConfig: any = {
+    model: userSettings.model,
     messages: context,
-    max_tokens: userSettings.maxTokens,
     tools: [
       {
         type: 'function',
         function: {
-          name: 'output',
-          description: 'Output your rewritten input here',
+          name: 'output_rewritten_content',
+          description: 'Output the rewritten HTML content according to the template instructions',
           parameters: {
             type: 'object',
             properties: {
               html: {
                 type: 'string',
+                description: 'The rewritten HTML content',
               },
             },
+            required: ['html'],
+            additionalProperties: false,
           },
         },
       },
     ],
     tool_choice: 'required',
+  };
+
+  // Handle token limits based on model type
+  if (isNewModel) {
+    // New models use max_completion_tokens
+    baseConfig.max_completion_tokens = userSettings.maxTokens;
+  } else {
+    // Legacy models use max_tokens
+    baseConfig.max_tokens = userSettings.maxTokens;
+  }
+
+  // For reasoning models, add reasoning configuration if available
+  if (isReasoningModel(userSettings.model)) {
+    // Note: reasoning configuration might be available in future API versions
+    // baseConfig.reasoning = { effort: "medium", summary: "auto" };
+    console.log('Using reasoning model with function calling:', userSettings.model);
+  }
+
+  console.log('API request config:', {
+    model: baseConfig.model,
+    hasTools: !!baseConfig.tools,
+    tokenParam: isNewModel ? 'max_completion_tokens' : 'max_tokens',
+    isReasoning: isReasoningModel(userSettings.model),
   });
+
+  return openai.chat.completions.create(baseConfig);
 }
 
 /**
@@ -68,41 +113,85 @@ export async function CoT(
       content: original,
     };
 
-    const first_completion = await completion(
-      openai,
-      [system_message, original_message],
-      userSettings
-    );
+    const isReasoning = isReasoningModel(userSettings.model);
 
-    const tool_call = first_completion.choices[0]?.message?.tool_calls?.[0];
-    if (!tool_call?.function?.arguments) {
-      throw new Error('No tool call arguments received from first completion');
+    if (isReasoning) {
+      // For reasoning models, use a more direct approach
+      // They will reason internally and then call the function when ready
+      console.log('Using reasoning model - single completion with internal reasoning');
+
+      const enhanced_message: OpenAI.Chat.Completions.ChatCompletionUserMessageParam = {
+        role: 'user',
+        content: `${original}\n\nPlease rewrite this content according to the template instructions provided in the system message. Think through your approach carefully and call the output_rewritten_content function when you're ready with the final result.`,
+      };
+
+      const completion_response = await completion(
+        openai,
+        [system_message, enhanced_message],
+        userSettings
+      );
+
+      const tool_call = completion_response.choices[0]?.message?.tool_calls?.[0];
+      if (!tool_call?.function?.arguments) {
+        throw new Error('No tool call arguments received from reasoning model');
+      }
+
+      const parsed = JSON.parse(tool_call.function.arguments);
+      return parsed.html;
+    } else {
+      // For traditional models, use Chain of Thought with two-step refinement
+      console.log('Using traditional model - Chain of Thought approach');
+
+      const first_completion = await completion(
+        openai,
+        [system_message, original_message],
+        userSettings
+      );
+
+      const tool_call = first_completion.choices[0]?.message?.tool_calls?.[0];
+      if (!tool_call?.function?.arguments) {
+        throw new Error('No tool call arguments received from first completion');
+      }
+
+      const first_completion_message: OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam =
+        {
+          role: 'assistant',
+          content: first_completion.choices[0]?.message?.content || '',
+          tool_calls: first_completion.choices[0]?.message?.tool_calls,
+        };
+
+      const function_result_message: OpenAI.Chat.Completions.ChatCompletionToolMessageParam = {
+        role: 'tool',
+        content: tool_call.function.arguments,
+        tool_call_id: tool_call.id,
+      };
+
+      const final_user_message: OpenAI.Chat.Completions.ChatCompletionUserMessageParam = {
+        role: 'user',
+        content:
+          "Carefully review your result. Make sure it adheres to all requirements, fix any issues, and improve the quality. When you're satisfied with the result, call the output_rewritten_content function again with your final version.",
+      };
+
+      const final_completion = await completion(
+        openai,
+        [
+          system_message,
+          original_message,
+          first_completion_message,
+          function_result_message,
+          final_user_message,
+        ],
+        userSettings
+      );
+
+      const final_tool_call = final_completion.choices[0]?.message?.tool_calls?.[0];
+      if (!final_tool_call?.function?.arguments) {
+        throw new Error('No tool call arguments received from final completion');
+      }
+
+      const final = JSON.parse(final_tool_call.function.arguments);
+      return final.html;
     }
-
-    const first_completion_message: OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam = {
-      role: 'assistant',
-      content: tool_call.function.arguments,
-    };
-
-    const final_user_message: OpenAI.Chat.Completions.ChatCompletionUserMessageParam = {
-      role: 'user',
-      content:
-        "Carefully go over your result one last time. Make sure that it adheres to all given requirements, edit minor details or rewrite bad parts of the text. Do it carefully, step by step, outlining your thought process, possibly doing different versions of the text. When you think that the quality of it is good enough and doesn't need anymore edits, output it using 'output' tool.",
-    };
-
-    const final_completion = await completion(
-      openai,
-      [system_message, original_message, first_completion_message, final_user_message],
-      userSettings
-    );
-
-    const final_tool_call = final_completion.choices[0]?.message?.tool_calls?.[0];
-    if (!final_tool_call?.function?.arguments) {
-      throw new Error('No tool call arguments received from final completion');
-    }
-
-    const final = JSON.parse(final_tool_call.function.arguments);
-    return final.html;
   } catch (error) {
     console.error('Error occurred during CoT: ', error);
     return null;

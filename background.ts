@@ -251,21 +251,51 @@ async function* generate(
     }
   }
 
-  // Test the API key
+  // Test the API key with appropriate parameters for the model
   const client = new OpenAI({ apiKey: effectiveSettings.apiKey, dangerouslyAllowBrowser: true });
   try {
-    await client.chat.completions.create({
-      model: effectiveSettings.model as any,
+    const testConfig: any = {
+      model: effectiveSettings.model,
       messages: [{ role: 'system', content: 'ping' }],
-      max_tokens: 10,
-    });
-    console.log('API key validated successfully');
+    };
+
+    // Use appropriate token parameter based on model
+    const newModels = ['o3', 'o4-mini', 'o1-preview', 'o1-mini'];
+    if (newModels.includes(effectiveSettings.model)) {
+      testConfig.max_completion_tokens = 10;
+    } else {
+      testConfig.max_tokens = 10;
+    }
+
+    await client.chat.completions.create(testConfig);
+    console.log('API key validated successfully for model:', effectiveSettings.model);
   } catch (error) {
     console.error('API key validation failed:', error);
     // If user key fails, try fallback
     if (fallbackKey && effectiveSettings.apiKey !== fallbackKey) {
       console.log('Retrying with fallback key...');
       effectiveSettings.apiKey = fallbackKey;
+
+      // Retry validation with fallback key
+      try {
+        const testConfig: any = {
+          model: effectiveSettings.model,
+          messages: [{ role: 'system', content: 'ping' }],
+        };
+
+        const newModels = ['o3', 'o4-mini', 'o1-preview', 'o1-mini'];
+        if (newModels.includes(effectiveSettings.model)) {
+          testConfig.max_completion_tokens = 10;
+        } else {
+          testConfig.max_tokens = 10;
+        }
+
+        await client.chat.completions.create(testConfig);
+        console.log('API key validated successfully with fallback key');
+      } catch (fallbackError) {
+        console.error('Fallback API key validation also failed:', fallbackError);
+        throw new Error('API key validation failed for both user and fallback keys');
+      }
     } else {
       throw new Error('API key validation failed');
     }
