@@ -12,6 +12,7 @@
       "128": "icons/icon128.png"
     }
   },
+  "options_page": "options.html",
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.bundle.js"

@@ -8,6 +8,7 @@ export default (env, _argv) => {
     entry: {
       background: './background.ts',
       popup: './popup.ts',
+      options: './options.ts',
     },
     output: {
       path: path.resolve(process.cwd(), `dist-${browser}`),
@@ -60,6 +61,13 @@ export default (env, _argv) => {
             const popupDest = path.resolve(distDir, 'popup.html');
             if (fs.existsSync(popupSrc)) {
               fs.copyFileSync(popupSrc, popupDest);
+            }
+
+            // Copy options.html
+            const optionsSrc = 'options.html';
+            const optionsDest = path.resolve(distDir, 'options.html');
+            if (fs.existsSync(optionsSrc)) {
+              fs.copyFileSync(optionsSrc, optionsDest);
             }
 
             // Copy config.json

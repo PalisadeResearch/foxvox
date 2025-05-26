@@ -5,7 +5,14 @@ import {
   push_to_object_store,
 } from './database';
 import { CoT } from './generation';
-import { NodeData, NodeWeight, GeneratedNode, ChromeMessage, Template } from './types';
+import {
+  NodeData,
+  NodeWeight,
+  GeneratedNode,
+  ChromeMessage,
+  Template,
+  UserSettings,
+} from './types';
 import { unifiedBrowser } from './src/utils/browser-polyfill';
 import OpenAI from 'openai';
 
@@ -207,32 +214,23 @@ function collect_content(): NodeData[] {
 async function* generate(
   nodes: NodeData[],
   template: Template,
-  openai: string | undefined,
-  default_openai: string
+  userSettings: UserSettings,
+  fallbackKey?: string
 ): AsyncGenerator<GeneratedNode, void, unknown> {
-  let key = openai;
-  console.log('Community key is: ', default_openai);
+  const effectiveSettings = { ...userSettings };
 
-  if (key) {
-    const client = new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true });
-    try {
-      await client.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'ping',
-          },
-        ],
-      });
-    } catch {
-      console.log('Fetching data!');
+  // Validate API key, use fallback if needed
+  if (!effectiveSettings.apiKey || !effectiveSettings.apiKey.startsWith('sk-')) {
+    if (fallbackKey) {
+      console.log('Using fallback API key...');
+      effectiveSettings.apiKey = fallbackKey;
+    } else {
+      console.log('Fetching community key...');
       try {
         const response = await fetch(
           'https://gist.githubusercontent.com/fedor-palisade-research/15cc05c51d4659d7bbec3f5e9594aaf6/raw/311a92e4a25ce1fd5a64951ad35ab09b98399f88/community_key.txt'
         );
         const data = await response.text();
-        console.log(data);
 
         function decodeBase64(str: string): string {
           return decodeURIComponent(
@@ -245,36 +243,31 @@ async function* generate(
           );
         }
 
-        key = decodeBase64(data);
+        effectiveSettings.apiKey = decodeBase64(data);
       } catch (error) {
-        console.error('Error fetching the string:', error);
-        key = default_openai;
+        console.error('Error fetching community key:', error);
+        throw new Error('No valid API key available');
       }
     }
-  } else {
-    console.log('Fetching data!');
-    try {
-      const response = await fetch(
-        'https://gist.githubusercontent.com/fedor-palisade-research/15cc05c51d4659d7bbec3f5e9594aaf6/raw/311a92e4a25ce1fd5a64951ad35ab09b98399f88/community_key.txt'
-      );
-      const data = await response.text();
-      console.log(data);
+  }
 
-      function decodeBase64(str: string): string {
-        return decodeURIComponent(
-          atob(str)
-            .split('')
-            .map(c => {
-              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            })
-            .join('')
-        );
-      }
-
-      key = decodeBase64(data);
-    } catch (error) {
-      console.error('Error fetching the string:', error);
-      key = default_openai;
+  // Test the API key
+  const client = new OpenAI({ apiKey: effectiveSettings.apiKey, dangerouslyAllowBrowser: true });
+  try {
+    await client.chat.completions.create({
+      model: effectiveSettings.model as any,
+      messages: [{ role: 'system', content: 'ping' }],
+      max_tokens: 10,
+    });
+    console.log('API key validated successfully');
+  } catch (error) {
+    console.error('API key validation failed:', error);
+    // If user key fails, try fallback
+    if (fallbackKey && effectiveSettings.apiKey !== fallbackKey) {
+      console.log('Retrying with fallback key...');
+      effectiveSettings.apiKey = fallbackKey;
+    } else {
+      throw new Error('API key validation failed');
     }
   }
 
@@ -288,7 +281,7 @@ async function* generate(
       template.generation
     );
     const original = node.innerHTML;
-    const generation = await CoT(key || default_openai, template, original);
+    const generation = await CoT(effectiveSettings, template, original);
     console.log('CoT finished for node', node, 'at', Date.now(), 'with result:', generation);
     return generation ? { xpath: node.xpath, html: generation } : null;
   });
@@ -484,12 +477,16 @@ async function process_request(request: ChromeMessage): Promise<void> {
       if (template) {
         const nodes: GeneratedNode[] = [];
 
-        for await (const node of generate(
-          original,
-          template,
-          result['openai'] as string,
-          request.key || ''
-        )) {
+        // Get user settings
+        const settingsResult = await unifiedBrowser.storage.local.get('userSettings');
+        const userSettings: UserSettings = settingsResult.userSettings || {
+          apiKey: (result['openai'] as string) || request.key || '',
+          model: 'gpt-4o',
+          customPrompt: '',
+          maxTokens: 4000,
+        };
+
+        for await (const node of generate(original, template, userSettings, request.key)) {
           nodes.push(node);
           const xpath = node.xpath;
           const html = node.html;

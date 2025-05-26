@@ -64,3 +64,10 @@ export interface GenerateStorageResult {
   [key: string]: string | Template | undefined;
   openai?: string;
 }
+
+export interface UserSettings {
+  apiKey: string;
+  model: string;
+  customPrompt: string;
+  maxTokens: number;
+}

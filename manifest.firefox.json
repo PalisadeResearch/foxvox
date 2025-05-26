@@ -18,6 +18,10 @@
       "128": "icons/icon128.png"
     }
   },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "background": {
     "scripts": ["background.bundle.js"],
     "persistent": false
