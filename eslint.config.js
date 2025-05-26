@@ -65,6 +65,6 @@ export default [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.min.js', 'coverage/**'],
+    ignores: ['dist/**', 'dist-*/**', 'node_modules/**', '*.min.js', '*.bundle.js', 'coverage/**'],
   },
 ];

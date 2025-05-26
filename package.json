@@ -31,8 +31,12 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack --mode development --watch",
+    "build": "npm run build:chrome && npm run build:firefox",
+    "build:chrome": "webpack --mode production --env browser=chrome",
+    "build:firefox": "webpack --mode production --env browser=firefox",
+    "dev": "webpack --mode development --watch --env browser=chrome",
+    "dev:chrome": "webpack --mode development --watch --env browser=chrome",
+    "dev:firefox": "webpack --mode development --watch --env browser=firefox",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.js --fix",
     "lint:check": "eslint . --ext .ts,.js",

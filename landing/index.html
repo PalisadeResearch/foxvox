@@ -1,133 +1,193 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FoxVox</title>
-    <link rel="stylesheet" href="https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
+  <body>
     <header>
-        <div class="header-content">
-            <img src="images/icon128.png" alt="FoxVox Icon" class="header-icon">
-            <div class="header-text">
-                <h1>FoxVox: one click to alter reality</h1>
-                <p class="subtitle">How AI could subtly manipulate the content you consume.</p>
-            </div>
+      <div class="header-content">
+        <img src="images/icon128.png" alt="FoxVox Icon" class="header-icon" />
+        <div class="header-text">
+          <h1>FoxVox: one click to alter reality</h1>
+          <p class="subtitle">How AI could subtly manipulate the content you consume.</p>
         </div>
-        <div class="link-container">
-            <a href="https://chrome.google.com/webstore" class="cta-button">
-                Add to Chrome
-                <img src="images/webstore-logo.png" alt="Chrome web store Logo" class="header-button">
-            </a>
-            <a href="https://github.com/PalisadeResearch/fox-vox" class="cta-button">
-                <img src="images/github-logo.png" alt="GitHub Logo" class="header-button">
-            </a>
-            <a href="https://x.com/PalisadeAI" class="cta-button">
-                <img src="images/twitter-logo.png" alt="Twitter Logo" class="header-button">
-            </a>
-        </div>
+      </div>
+      <div class="link-container">
+        <a href="https://chrome.google.com/webstore" class="cta-button">
+          Add to Chrome
+          <img src="images/webstore-logo.png" alt="Chrome web store Logo" class="header-button" />
+        </a>
+        <a href="https://github.com/PalisadeResearch/fox-vox" class="cta-button">
+          <img src="images/github-logo.png" alt="GitHub Logo" class="header-button" />
+        </a>
+        <a href="https://x.com/PalisadeAI" class="cta-button">
+          <img src="images/twitter-logo.png" alt="Twitter Logo" class="header-button" />
+        </a>
+      </div>
     </header>
     <main>
-        <nav>
-            <ul class="toc">
-                <li><a href="#introduction">Introduction</a></li>
-                <li><a href="#comparison">What does FoxVox look like?</a></li>
-                <li><a href="#danger">Why is this dangerous?</a></li>
-                <li><a href="#cost">FoxVox is fast and cheap</a></li>
-                <li><a href="#try">Try FoxVox yourself</a></li>
-                <li><a href="#key">Community key</a></li>
-            </ul>
-        </nav>
-        <section id="introduction">
-            <p>FoxVox is an open-source Chrome extension powered by GPT-4. <a href="https://palisaderesearch.org/"> We </a> created FoxVox to demonstrate how AI can be used to subtly manipulate the content you consume.</p>
-        </section>
+      <nav>
+        <ul class="toc">
+          <li><a href="#introduction">Introduction</a></li>
+          <li><a href="#comparison">What does FoxVox look like?</a></li>
+          <li><a href="#danger">Why is this dangerous?</a></li>
+          <li><a href="#cost">FoxVox is fast and cheap</a></li>
+          <li><a href="#try">Try FoxVox yourself</a></li>
+          <li><a href="#key">Community key</a></li>
+        </ul>
+      </nav>
+      <section id="introduction">
+        <p>
+          FoxVox is an open-source Chrome extension powered by GPT-4.
+          <a href="https://palisaderesearch.org/"> We </a> created FoxVox to demonstrate how AI can
+          be used to subtly manipulate the content you consume.
+        </p>
+      </section>
 
-        <section id="comparison">
-            <h2>What can FoxVox do?</h2>
-            <p>It can turn Sam Altman’s Twitter account into a nest of conspiracy theories, or make a collection of silly jokes out of the OpenAI post:</p>
-            <div id="juxtapose1" class="juxtapose"></div>
-            <p>It can make the New York Times look like it was written by Fox, or Vox:</p>
-            <div id="juxtapose2" class="juxtapose"></div>
-        </section>
+      <section id="comparison">
+        <h2>What can FoxVox do?</h2>
+        <p>
+          It can turn Sam Altman’s Twitter account into a nest of conspiracy theories, or make a
+          collection of silly jokes out of the OpenAI post:
+        </p>
+        <div id="juxtapose1" class="juxtapose"></div>
+        <p>It can make the New York Times look like it was written by Fox, or Vox:</p>
+        <div id="juxtapose2" class="juxtapose"></div>
+      </section>
 
-        <section id="danger">
-            <h2>Why is this dangerous?</h2>
-            <ul>
-                <li><strong>Siloed realities:</strong> Companies, governments, and cyber criminals already know a lot about you. Cookies track your internet activity, and companies pay data brokers hundreds of billions of dollars to influence which content lands in your newsfeed. But now, news providers, marketers, and political campaigns could rewrite articles on the fly, tailored to your medical condition, political beliefs, or the age of your children. You’d never even know that the content had been optimized to conform to your worldview. </li>
-                <li><strong>Propaganda:</strong> Effective propaganda often involves interpreting true facts to favor a specific viewpoint, as opposed to spreading outright lies. AI models can recreate realistic news titles and articles en masse, enabling actors to flood the internet with politically charged content. </li>
-                <li><strong>Hidden biases:</strong> When biased models are incorporated into our daily lives, the subtle changes they cause may go unnoticed, potentially leading to undesirable outcomes. Today, companies increasingly use <a href="https://automatic1111.github.io/llm-political-compass">AI with consistent political biases</a> to generate, analyze, and structure their data. </li>
-                <li><strong>Breakdown of trust:</strong> It is already difficult to know what to believe on the internet. The cumulative effects of ubiquitous AI-generated content could lead to the further breakdown of public discourse, informed decision-making, institutional trust, and could increase polarization. </li>
-            </ul>
-        </section>
+      <section id="danger">
+        <h2>Why is this dangerous?</h2>
+        <ul>
+          <li>
+            <strong>Siloed realities:</strong> Companies, governments, and cyber criminals already
+            know a lot about you. Cookies track your internet activity, and companies pay data
+            brokers hundreds of billions of dollars to influence which content lands in your
+            newsfeed. But now, news providers, marketers, and political campaigns could rewrite
+            articles on the fly, tailored to your medical condition, political beliefs, or the age
+            of your children. You’d never even know that the content had been optimized to conform
+            to your worldview.
+          </li>
+          <li>
+            <strong>Propaganda:</strong> Effective propaganda often involves interpreting true facts
+            to favor a specific viewpoint, as opposed to spreading outright lies. AI models can
+            recreate realistic news titles and articles en masse, enabling actors to flood the
+            internet with politically charged content.
+          </li>
+          <li>
+            <strong>Hidden biases:</strong> When biased models are incorporated into our daily
+            lives, the subtle changes they cause may go unnoticed, potentially leading to
+            undesirable outcomes. Today, companies increasingly use
+            <a href="https://automatic1111.github.io/llm-political-compass"
+              >AI with consistent political biases</a
+            >
+            to generate, analyze, and structure their data.
+          </li>
+          <li>
+            <strong>Breakdown of trust:</strong> It is already difficult to know what to believe on
+            the internet. The cumulative effects of ubiquitous AI-generated content could lead to
+            the further breakdown of public discourse, informed decision-making, institutional
+            trust, and could increase polarization.
+          </li>
+        </ul>
+      </section>
 
-        <section id="cost">
-            <h2>FoxVox is fast and cheap</h2>
-            <p>It can process large pages like the NYT in less than 10 seconds, and can process hundreds of pages for less than $20. For those willing to wait longer or pay more, the text quality can be significantly improved with chain/tree of thought and better context utilization</p>
-        </section>
+      <section id="cost">
+        <h2>FoxVox is fast and cheap</h2>
+        <p>
+          It can process large pages like the NYT in less than 10 seconds, and can process hundreds
+          of pages for less than $20. For those willing to wait longer or pay more, the text quality
+          can be significantly improved with chain/tree of thought and better context utilization
+        </p>
+      </section>
 
-        <section id="try">
-            <h2>Try FoxVox yourself</h2>
-            <ol>
-                <li><a href="https://chrome.google.com/webstore">Install the Chrome extension</a></li>
-                <li>
-                    <a href="https://platform.openai.com/api-keys">Set your own OpenAI API key </a> or use one provided below.
-                    (Your data is only stored locally, so your keys will be safe.)
-                </li>
-                <li>Visit your favorite website!</li>
-                <li>(This is a fast-and-dirty demo. If something goes wrong, just restart the plugin).</li>
-            </ol>
-            <p>As a warm-up, you can rewrite your coworker's twitter, github or linkedin account. Make sure to stop them before they change all their passwords :)</p>
-        </section>
+      <section id="try">
+        <h2>Try FoxVox yourself</h2>
+        <ol>
+          <li><a href="https://chrome.google.com/webstore">Install the Chrome extension</a></li>
+          <li>
+            <a href="https://platform.openai.com/api-keys">Set your own OpenAI API key </a> or use
+            one provided below. (Your data is only stored locally, so your keys will be safe.)
+          </li>
+          <li>Visit your favorite website!</li>
+          <li>
+            (This is a fast-and-dirty demo. If something goes wrong, just restart the plugin).
+          </li>
+        </ol>
+        <p>
+          As a warm-up, you can rewrite your coworker's twitter, github or linkedin account. Make
+          sure to stop them before they change all their passwords :)
+        </p>
+      </section>
 
-        <section id="key">
-            <h2>Community key</h2>
-            <p>We realise not all will be able to create and use their own keys. For purposes of testing, we provide our own key, with a community limit of 20$ per month. Please, use it sparingly and only if you can't afford your own key or register it.</p>
-            <p>You will need at least tier 1 API limit for the extension to work stable.</p>
-            <p>This key will be automatically used if you leave the input field empty, indicated by "community key" line.</p>
-        </section>
-        <section>
-            Project by <a href="https://palisaderesearch.org/">Palisade Research</a> (2024). Subscribe <a href="http://x.com/palisadeai">on X</a>, and check it on <a href="https://github.com/palisaderesearch/foxvox">GitHub</a>.
-        </section>
+      <section id="key">
+        <h2>Community key</h2>
+        <p>
+          We realise not all will be able to create and use their own keys. For purposes of testing,
+          we provide our own key, with a community limit of 20$ per month. Please, use it sparingly
+          and only if you can't afford your own key or register it.
+        </p>
+        <p>You will need at least tier 1 API limit for the extension to work stable.</p>
+        <p>
+          This key will be automatically used if you leave the input field empty, indicated by
+          "community key" line.
+        </p>
+      </section>
+      <section>
+        Project by <a href="https://palisaderesearch.org/">Palisade Research</a> (2024). Subscribe
+        <a href="http://x.com/palisadeai">on X</a>, and check it on
+        <a href="https://github.com/palisaderesearch/foxvox">GitHub</a>.
+      </section>
     </main>
 
     <script src="https://cdn.knightlab.com/libs/juxtapose/latest/js/juxtapose.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            new juxtapose.JXSlider('#juxtapose1', [
-                {
-                    src: 'images/SA_humour.png',
-                    label: 'Humour'
-                },
-                {
-                    src: 'images/SA_conspiracy.png',
-                    label: 'Conspiracy'
-                }
-            ], {
-                animate: true,
-                showLabels: true,
-                startingPosition: "50%"
-            });
+      document.addEventListener('DOMContentLoaded', function () {
+        new juxtapose.JXSlider(
+          '#juxtapose1',
+          [
+            {
+              src: 'images/SA_humour.png',
+              label: 'Humour',
+            },
+            {
+              src: 'images/SA_conspiracy.png',
+              label: 'Conspiracy',
+            },
+          ],
+          {
+            animate: true,
+            showLabels: true,
+            startingPosition: '50%',
+          }
+        );
 
-            new juxtapose.JXSlider('#juxtapose2', [
-                {
-                    src: 'images/NYT_fox.png',
-                    label: 'NYT Fox'
-                },
-                {
-                    src: 'images/NYT_vox.png',
-                    label: 'NYT Vox'
-                }
-            ], {
-                animate: true,
-                showLabels: true,
-                startingPosition: "50%"
-            });
-        });
+        new juxtapose.JXSlider(
+          '#juxtapose2',
+          [
+            {
+              src: 'images/NYT_fox.png',
+              label: 'NYT Fox',
+            },
+            {
+              src: 'images/NYT_vox.png',
+              label: 'NYT Vox',
+            },
+          ],
+          {
+            animate: true,
+            showLabels: true,
+            startingPosition: '50%',
+          }
+        );
+      });
     </script>
-</body>
-
+  </body>
 </html>

@@ -1,12 +1,12 @@
 import { PopupState, Template, Config, ChromeMessage } from './types';
+import { unifiedBrowser } from './src/utils/browser-polyfill';
 
 /**
  * Gets the currently active tab
  */
-function getActiveTab(callback: (tab: chrome.tabs.Tab) => void): void {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-    callback(tabs[0]);
-  });
+async function getActiveTab(): Promise<chrome.tabs.Tab> {
+  const tabs = await unifiedBrowser.tabs.query({ active: true, currentWindow: true });
+  return tabs[0];
 }
 
 let generate_button_state: PopupState = {
@@ -53,12 +53,12 @@ function stopEmojiAnimation(): void {
  */
 export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
   return new Promise((resolve, reject) => {
-    fetch(chrome.runtime.getURL('/config.json'))
+    fetch(unifiedBrowser.runtime.getURL('/config.json'))
       .then(response => response.json())
       .then((data: Config) => {
         const templates = data.templates;
 
-        chrome.runtime.sendMessage({
+        unifiedBrowser.runtime.sendMessage({
           action: 'setup',
           id: tab.id,
           url: url.hostname + url.pathname,
@@ -88,7 +88,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
           input.addEventListener('change', async () => {
             localStorage.setItem('chosen_radio', input.id);
             console.log('Sending template' + template.name);
-            chrome.runtime.sendMessage({
+            unifiedBrowser.runtime.sendMessage({
               action: 'set_template',
               id: tab.id,
               url: url.hostname + url.pathname,
@@ -96,7 +96,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
             } as ChromeMessage);
           });
 
-          chrome.runtime.onMessage.addListener((message: ChromeMessage) => {
+          unifiedBrowser.runtime.onMessage.addListener((message: ChromeMessage) => {
             if (message.action === 'template_cached' && message.template_name === template.name) {
               span.innerText = template.name + ' ✅';
             }
@@ -121,7 +121,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
             const foundTemplate = templatesArray.find(template => template.name === inputValue);
 
             if (foundTemplate) {
-              chrome.runtime.sendMessage({
+              unifiedBrowser.runtime.sendMessage({
                 action: 'set_template',
                 id: tab.id,
                 url: url.hostname + url.pathname,
@@ -144,7 +144,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
             );
           }
 
-          chrome.runtime.sendMessage({
+          unifiedBrowser.runtime.sendMessage({
             action: 'generate',
             id: tab.id,
             url: url.hostname + url.pathname,
@@ -162,7 +162,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
 
           console.log('Setting new openAI key...' + openAIKeyValue);
 
-          chrome.runtime.sendMessage({
+          unifiedBrowser.runtime.sendMessage({
             action: 'push_openai_to_background',
             key: openAIKeyValue,
             url: url.hostname + url.pathname,
@@ -182,43 +182,38 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
  * Initializes the popup when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', async () => {
-  getActiveTab((tab: chrome.tabs.Tab) => {
-    if (!tab.url) return;
+  const tab = await getActiveTab();
+  if (!tab.url) return;
 
-    const url = new URL(tab.url);
-    setup(tab, url).then(async () => {
-      chrome.runtime.onMessage.addListener(
-        (
-          message: ChromeMessage,
-          _sender: chrome.runtime.MessageSender,
-          _sendResponse: (response?: unknown) => void
-        ) => {
-          if (message.action === 'generation_initialized') {
-            startEmojiAnimation();
-            console.log('Generation initialized');
-          }
-          if (message.action === 'generation_completed') {
-            stopEmojiAnimation();
-            console.log('Generation completed');
-          }
-          if (message.action === 'push_openai_to_popup') {
-            console.log('OpenAI set!: ' + message.openai);
-            const openAIKeyInput = document.getElementById('openAIKey') as HTMLInputElement;
-            if (openAIKeyInput && message.openai) {
-              openAIKeyInput.value = message.openai;
-            }
-          }
-          if (message.action === 'close_popup') {
-            window.close();
+  const url = new URL(tab.url);
+  setup(tab, url).then(async () => {
+    unifiedBrowser.runtime.onMessage.addListener(
+      (message: ChromeMessage, _sender: any, _sendResponse: (response?: unknown) => void) => {
+        if (message.action === 'generation_initialized') {
+          startEmojiAnimation();
+          console.log('Generation initialized');
+        }
+        if (message.action === 'generation_completed') {
+          stopEmojiAnimation();
+          console.log('Generation completed');
+        }
+        if (message.action === 'push_openai_to_popup') {
+          console.log('OpenAI set!: ' + message.openai);
+          const openAIKeyInput = document.getElementById('openAIKey') as HTMLInputElement;
+          if (openAIKeyInput && message.openai) {
+            openAIKeyInput.value = message.openai;
           }
         }
-      );
+        if (message.action === 'close_popup') {
+          window.close();
+        }
+      }
+    );
 
-      chrome.runtime.sendMessage({
-        action: 'setup_finished',
-        id: tab.id,
-        url: url.hostname + url.pathname,
-      } as ChromeMessage);
-    });
+    unifiedBrowser.runtime.sendMessage({
+      action: 'setup_finished',
+      id: tab.id,
+      url: url.hostname + url.pathname,
+    } as ChromeMessage);
   });
 });

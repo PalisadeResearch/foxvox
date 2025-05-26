@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "FoxVox",
+  "version": "3.1",
+  "description": "Provided with OpenAI API key, rewrites any website to look like something else!",
+  "permissions": [
+    "storage",
+    "tabs",
+    "webNavigation",
+    "activeTab",
+    "<all_urls>"
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "scripts": ["background.bundle.js"],
+    "persistent": false
+  },
+  "web_accessible_resources": ["config.json"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "foxvox@palisaderesearch.org",
+      "strict_min_version": "109.0"
+    }
+  },
+  "content_security_policy": "script-src 'self'; object-src 'self'"
+}

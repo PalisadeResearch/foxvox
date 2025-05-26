@@ -13,6 +13,7 @@ import {
   Template,
   StorageResult,
 } from './types';
+import { unifiedBrowser } from './src/utils/browser-polyfill';
 import OpenAI from 'openai';
 
 /**
@@ -310,12 +311,12 @@ async function* generate(
 /**
  * Handles web navigation completion events
  */
-chrome.webNavigation.onCompleted.addListener(
+unifiedBrowser.webNavigation.onCompleted.addListener(
   async (details: chrome.webNavigation.WebNavigationFramedCallbackDetails) => {
     if (details.frameId === 0) {
       await clear_object_stores(new URL(details.url).hostname + new URL(details.url).pathname);
 
-      chrome.runtime.sendMessage({
+      unifiedBrowser.runtime.sendMessage({
         action: 'close_popup',
       });
     }
