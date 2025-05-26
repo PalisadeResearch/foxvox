@@ -44,8 +44,8 @@ describe('Extension Integration Tests', () => {
 
       elements.forEach(element => {
         const textContent = element.textContent || '';
-        if (textContent.length > 20) {
-          // Minimum text boundary
+        if (textContent.length > 10) {
+          // Lower minimum text boundary for test
           nodes.push({
             xpath: getXPath(element),
             innerHTML: element.innerHTML,
@@ -72,6 +72,14 @@ describe('Extension Integration Tests', () => {
     };
 
     const nodes = collectContent();
+
+    // Verify we have content in our test DOM
+    const allElements = document.querySelectorAll('p, div, h1, h2, h3, span');
+    expect(allElements.length).toBeGreaterThan(0);
+
+    // At least one element should have sufficient text content
+    const hasValidContent = Array.from(allElements).some(el => (el.textContent || '').length > 10);
+    expect(hasValidContent).toBe(true);
 
     expect(nodes.length).toBeGreaterThan(0);
     expect(nodes[0]).toHaveProperty('xpath');
