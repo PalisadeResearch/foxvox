@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
 
 npm run pre-commit
+npm run test:light
