@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const url = new URL(tab.url);
   setup(tab, url).then(async () => {
     unifiedBrowser.runtime.onMessage.addListener(
-      (message: ChromeMessage, _sender: any, _sendResponse: (response?: unknown) => void) => {
+      (message: ChromeMessage, _sender: unknown, _sendResponse: (response?: unknown) => void) => {
         if (message.action === 'generation_initialized') {
           startEmojiAnimation();
           console.log('Generation initialized');

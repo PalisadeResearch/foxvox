@@ -3,14 +3,16 @@
  * Provides a unified API interface regardless of the browser
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Detect the browser environment
-export const isFirefox = typeof (globalThis as any).browser !== 'undefined';
+export const isFirefox = typeof (globalThis as unknown as { browser?: unknown }).browser !== 'undefined';
 export const isChrome = typeof chrome !== 'undefined' && !isFirefox;
 
 // Create a unified browser API
 export const browserAPI = (() => {
-  if (isFirefox && typeof (globalThis as any).browser !== 'undefined') {
-    return (globalThis as any).browser;
+  if (isFirefox && typeof (globalThis as unknown as { browser?: unknown }).browser !== 'undefined') {
+    return (globalThis as unknown as { browser: typeof chrome }).browser;
   }
   if (isChrome && typeof chrome !== 'undefined') {
     return chrome;

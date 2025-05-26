@@ -11,7 +11,6 @@ import {
   GeneratedNode,
   ChromeMessage,
   Template,
-  StorageResult,
 } from './types';
 import { unifiedBrowser } from './src/utils/browser-polyfill';
 import OpenAI from 'openai';
@@ -559,7 +558,7 @@ async function process_request(request: ChromeMessage): Promise<void> {
 unifiedBrowser.runtime.onMessage.addListener(
   async (
     request: ChromeMessage,
-    _sender: any,
+    _sender: unknown,
     _sendResponse: (response?: unknown) => void
   ): Promise<boolean> => {
     await process_request(request);
