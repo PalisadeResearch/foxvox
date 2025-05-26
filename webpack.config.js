@@ -2,9 +2,8 @@ import * as path from 'path';
 
 export default {
     entry: {
-        background: './background.js',
-        generate: './generation.js',
-        database: './database.js',
+        background: './background.ts',
+        popup: './popup.ts',
     },
     output: {
         path: path.resolve(process.cwd(), 'dist'),
