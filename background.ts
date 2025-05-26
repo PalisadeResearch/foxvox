@@ -5,7 +5,14 @@ import {
   push_to_object_store,
 } from './database';
 import { CoT } from './generation';
-import { NodeData, NodeWeight, GeneratedNode, ChromeMessage, Template } from './types';
+import {
+  NodeData,
+  NodeWeight,
+  GeneratedNode,
+  ChromeMessage,
+  Template,
+  StorageResult,
+} from './types';
 import OpenAI from 'openai';
 
 /**
@@ -30,8 +37,9 @@ function collect_content(): NodeData[] {
   const nodeWeightCache = new Map<Node, NodeWeight>();
 
   function calculate_weight(node: Node): NodeWeight {
-    if (nodeWeightCache.has(node)) {
-      return nodeWeightCache.get(node)!;
+    const cached = nodeWeightCache.get(node);
+    if (cached) {
+      return cached;
     }
 
     let htmlWeight = 0;
@@ -286,7 +294,7 @@ async function* generate(
       template.generation
     );
     const original = node.innerHTML;
-    const generation = await CoT(key!, template, original);
+    const generation = await CoT(key || default_openai, template, original);
     console.log('CoT finished for node', node, 'at', Date.now(), 'with result:', generation);
     return generation ? { xpath: node.xpath, html: generation } : null;
   });
@@ -343,11 +351,13 @@ function push_cached_template(request: ChromeMessage): void {
           }
         };
 
-        await chrome.scripting.executeScript({
-          target: { tabId: request.id! },
-          func,
-          args: [xpath, html],
-        });
+        if (request.id) {
+          await chrome.scripting.executeScript({
+            target: { tabId: request.id },
+            func,
+            args: [xpath, html],
+          });
+        }
       });
     }
   );
@@ -379,11 +389,13 @@ function push_cached_template(request: ChromeMessage): void {
           }
         };
 
-        await chrome.scripting.executeScript({
-          target: { tabId: request.id! },
-          func,
-          args: [xpath, html],
-        });
+        if (request.id) {
+          await chrome.scripting.executeScript({
+            target: { tabId: request.id },
+            func,
+            args: [xpath, html],
+          });
+        }
       });
     }
   );
@@ -452,7 +464,7 @@ async function process_request(request: ChromeMessage): Promise<void> {
   }
 
   if (request.action === 'setup_finished') {
-    chrome.storage.local.get('openai', (result: { [key: string]: any }) => {
+    chrome.storage.local.get('openai', (result: StorageResult) => {
       let api_key = result['openai'];
 
       if (typeof api_key === 'undefined') {
@@ -478,15 +490,16 @@ async function process_request(request: ChromeMessage): Promise<void> {
 
       chrome.storage.local.get(
         ['template_' + request.url, 'openai'],
-        async (result: { [key: string]: any }) => {
-          if (result['template_' + request.url]) {
+        async (result: StorageResult) => {
+          const template = result['template_' + request.url] as Template;
+          if (template) {
             const nodes: GeneratedNode[] = [];
 
             for await (const node of generate(
               original,
-              result['template_' + request.url],
-              result['openai'],
-              request.key!
+              template,
+              result['openai'] as string,
+              request.key || ''
             )) {
               nodes.push(node);
               const xpath = node.xpath;
@@ -508,32 +521,30 @@ async function process_request(request: ChromeMessage): Promise<void> {
                 }
               };
 
-              chrome.scripting.executeScript({
-                target: { tabId: request.id! },
-                func,
-                args: [xpath, html],
-              });
+              if (request.id) {
+                chrome.scripting.executeScript({
+                  target: { tabId: request.id },
+                  func,
+                  args: [xpath, html],
+                });
+              }
             }
 
             if (nodes.length && request.url) {
-              await push_to_object_store(
-                request.url,
-                result['template_' + request.url].name,
-                nodes
-              );
+              await push_to_object_store(request.url, template.name, nodes);
             }
 
             console.log('Page rewritten!...');
 
-            chrome.storage.local.get(
-              ['template_' + request.url],
-              async (result: { [key: string]: any }) => {
+            chrome.storage.local.get(['template_' + request.url], async (result: StorageResult) => {
+              const storedTemplate = result['template_' + request.url] as Template;
+              if (storedTemplate) {
                 chrome.runtime.sendMessage({
                   action: 'template_cached',
-                  template_name: result['template_' + request.url].name,
+                  template_name: storedTemplate.name,
                 });
               }
-            );
+            });
 
             chrome.runtime.sendMessage({
               action: 'generation_completed',
@@ -556,7 +567,7 @@ chrome.runtime.onMessage.addListener(
   async (
     request: ChromeMessage,
     _sender: chrome.runtime.MessageSender,
-    _sendResponse: (response?: any) => void
+    _sendResponse: (response?: unknown) => void
   ): Promise<boolean> => {
     await process_request(request);
     return true;

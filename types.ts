@@ -54,3 +54,13 @@ export interface PopupState {
   currentEmojiIndex: number;
   emojiInterval: number;
 }
+
+export interface StorageResult {
+  [key: string]: string | Template | undefined;
+  openai?: string;
+}
+
+export interface GenerateStorageResult {
+  [key: string]: string | Template | undefined;
+  openai?: string;
+}

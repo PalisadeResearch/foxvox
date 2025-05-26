@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         (
           message: ChromeMessage,
           _sender: chrome.runtime.MessageSender,
-          _sendResponse: (response?: any) => void
+          _sendResponse: (response?: unknown) => void
         ) => {
           if (message.action === 'generation_initialized') {
             startEmojiAnimation();
