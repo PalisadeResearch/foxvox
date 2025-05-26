@@ -1,4 +1,4 @@
-import { NodeData, GeneratedNode } from "./types.js";
+import { NodeData, GeneratedNode } from "./types";
 
 /**
  * Opens an IndexedDB database with the specified name and creates object stores for templates

@@ -1,6 +1,6 @@
-import { clear_object_stores, fetch_from_object_store, open_indexDB, push_to_object_store } from "./database.js";
-import { CoT } from "./generation.js";
-import { NodeData, NodeWeight, GeneratedNode, ChromeMessage, Template, Templates } from "./types.js";
+import { clear_object_stores, fetch_from_object_store, open_indexDB, push_to_object_store } from "./database";
+import { CoT } from "./generation";
+import { NodeData, NodeWeight, GeneratedNode, ChromeMessage, Template, Templates } from "./types";
 import OpenAI from "openai";
 
 /**

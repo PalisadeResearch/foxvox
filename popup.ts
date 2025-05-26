@@ -1,4 +1,4 @@
-import { PopupState, Template, Templates, Config, ChromeMessage } from "./types.js";
+import { PopupState, Template, Templates, Config, ChromeMessage } from "./types";
 
 /**
  * Gets the currently active tab

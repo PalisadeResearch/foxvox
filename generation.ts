@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { Template } from "./types.js";
+import { Template } from "./types";
 
 /**
  * Creates a completion request to OpenAI API
