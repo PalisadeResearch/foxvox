@@ -53,4 +53,4 @@ export interface PopupState {
   isGenerating: boolean;
   currentEmojiIndex: number;
   emojiInterval: number;
-} 
+}

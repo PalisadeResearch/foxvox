@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.bundle.js
+
+# Logs
+*.log
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.tmp
+*.temp 
