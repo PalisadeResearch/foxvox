@@ -15,7 +15,7 @@ interface UserSettings {
  */
 const DEFAULT_SETTINGS: UserSettings = {
   apiKey: '',
-  model: 'gpt-4o',
+  model: 'gpt-4.1',
   customPrompt: '',
   maxTokens: 4000,
 };
@@ -140,7 +140,7 @@ class OptionsPage {
     }
 
     // Model validation
-    const validModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+    const validModels = ['o3', 'gpt-4.1', 'o4-mini'];
     if (!validModels.includes(settings.model)) {
       this.showMessage('Invalid model selected', 'error');
       return false;

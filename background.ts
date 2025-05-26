@@ -481,7 +481,7 @@ async function process_request(request: ChromeMessage): Promise<void> {
         const settingsResult = await unifiedBrowser.storage.local.get('userSettings');
         const userSettings: UserSettings = settingsResult.userSettings || {
           apiKey: (result['openai'] as string) || request.key || '',
-          model: 'gpt-4o',
+          model: 'gpt-4.1',
           customPrompt: '',
           maxTokens: 4000,
         };

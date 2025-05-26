@@ -25,11 +25,11 @@ async function loadSettingsStatus(): Promise<void> {
       apiKeyStatus.textContent = userSettings.apiKey.startsWith('sk-')
         ? 'Configured ✅'
         : 'Invalid ❌';
-      currentModel.textContent = userSettings.model || 'gpt-4o';
+      currentModel.textContent = userSettings.model || 'gpt-4.1';
       customPromptStatus.textContent = userSettings.customPrompt ? 'Set ✅' : 'None';
     } else {
       apiKeyStatus.textContent = 'Not configured ❌';
-      currentModel.textContent = 'Default (gpt-4o)';
+      currentModel.textContent = 'Default (gpt-4.1)';
       customPromptStatus.textContent = 'None';
     }
   } catch (error) {
