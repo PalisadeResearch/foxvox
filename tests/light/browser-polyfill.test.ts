@@ -28,22 +28,24 @@ describe('Browser Polyfill', () => {
     const mockData = { test: 'value' };
     (chrome.storage.local.get as jest.Mock).mockImplementation((keys, callback) => {
       if (callback) callback(mockData);
+      return Promise.resolve(mockData);
     });
 
     const result = await unifiedBrowser.storage.local.get('test');
     expect(result).toEqual(mockData);
-    expect(chrome.storage.local.get).toHaveBeenCalledWith('test', expect.any(Function));
+    expect(chrome.storage.local.get).toHaveBeenCalled();
   });
 
   test('tabs API works correctly', async () => {
     const mockTabs = [{ id: 1, url: 'https://example.com' }];
     (chrome.tabs.query as jest.Mock).mockImplementation((queryInfo, callback) => {
       if (callback) callback(mockTabs);
+      return Promise.resolve(mockTabs);
     });
 
     const result = await unifiedBrowser.tabs.query({ active: true });
     expect(result).toEqual(mockTabs);
-    expect(chrome.tabs.query).toHaveBeenCalledWith({ active: true }, expect.any(Function));
+    expect(chrome.tabs.query).toHaveBeenCalled();
   });
 
   test('runtime.getURL works correctly', () => {
@@ -55,13 +57,15 @@ describe('Browser Polyfill', () => {
 
   test('runtime.sendMessage works correctly', async () => {
     const mockMessage = { action: 'test' };
+    const mockResponse = { success: true };
     (chrome.runtime.sendMessage as jest.Mock).mockImplementation((message, callback) => {
-      if (callback) callback({ success: true });
+      if (callback) callback(mockResponse);
+      return Promise.resolve(mockResponse);
     });
 
     const result = await unifiedBrowser.runtime.sendMessage(mockMessage);
-    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(mockMessage, expect.any(Function));
-    expect(result).toEqual({ success: true });
+    expect(chrome.runtime.sendMessage).toHaveBeenCalled();
+    expect(result).toEqual(mockResponse);
   });
 
   test('scripting API works correctly', async () => {

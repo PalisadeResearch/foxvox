@@ -5,6 +5,11 @@ import '@testing-library/jest-dom';
  * Jest setup file for Chrome extension testing
  */
 
+// Polyfill for TextEncoder/TextDecoder (required for JSDOM)
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as any;
+
 // Mock Chrome APIs
 (globalThis as any).chrome = {
   runtime: {
