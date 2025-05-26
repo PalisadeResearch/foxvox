@@ -37,10 +37,13 @@ describe('Extension Integration Tests', () => {
   });
 
   test('content collection identifies valid nodes', async () => {
+    // Use the mockDOM document directly to ensure we have the right context
+    const testDocument = mockDOM.window.document;
+
     // Mock the content collection function (simplified version)
     const collectContent = () => {
       const nodes: any[] = [];
-      const elements = document.querySelectorAll('p, div, h1, h2, h3, span');
+      const elements = testDocument.querySelectorAll('p, div, h1, h2, h3, span');
 
       elements.forEach(element => {
         const textContent = element.textContent || '';
@@ -71,16 +74,15 @@ describe('Extension Integration Tests', () => {
       return '/' + parts.join('/');
     };
 
-    const nodes = collectContent();
-
-    // Verify we have content in our test DOM
-    const allElements = document.querySelectorAll('p, div, h1, h2, h3, span');
+    // Verify we have content in our test DOM first
+    const allElements = testDocument.querySelectorAll('p, div, h1, h2, h3, span');
     expect(allElements.length).toBeGreaterThan(0);
 
     // At least one element should have sufficient text content
     const hasValidContent = Array.from(allElements).some(el => (el.textContent || '').length > 10);
     expect(hasValidContent).toBe(true);
 
+    const nodes = collectContent();
     expect(nodes.length).toBeGreaterThan(0);
     expect(nodes[0]).toHaveProperty('xpath');
     expect(nodes[0]).toHaveProperty('innerHTML');
