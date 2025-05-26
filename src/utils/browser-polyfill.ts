@@ -6,12 +6,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Detect the browser environment
-export const isFirefox = typeof (globalThis as unknown as { browser?: unknown }).browser !== 'undefined';
+export const isFirefox =
+  typeof (globalThis as unknown as { browser?: unknown }).browser !== 'undefined';
 export const isChrome = typeof chrome !== 'undefined' && !isFirefox;
 
 // Create a unified browser API
 export const browserAPI = (() => {
-  if (isFirefox && typeof (globalThis as unknown as { browser?: unknown }).browser !== 'undefined') {
+  if (
+    isFirefox &&
+    typeof (globalThis as unknown as { browser?: unknown }).browser !== 'undefined'
+  ) {
     return (globalThis as unknown as { browser: typeof chrome }).browser;
   }
   if (isChrome && typeof chrome !== 'undefined') {
@@ -70,7 +74,7 @@ export const scripting = {
     if (isFirefox) {
       // Firefox uses tabs.executeScript for MV2
       const { target, func, args } = injection;
-      
+
       // For Firefox, we need to handle function execution differently
       if (func && args) {
         // Create a self-executing function with the arguments
@@ -81,7 +85,7 @@ export const scripting = {
             return func.apply(null, args);
           })();
         `;
-        
+
         return browserAPI.tabs
           .executeScript(target.tabId, { code })
           .then((result: any) => [{ result: result[0] }]);

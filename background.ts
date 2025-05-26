@@ -5,13 +5,7 @@ import {
   push_to_object_store,
 } from './database';
 import { CoT } from './generation';
-import {
-  NodeData,
-  NodeWeight,
-  GeneratedNode,
-  ChromeMessage,
-  Template,
-} from './types';
+import { NodeData, NodeWeight, GeneratedNode, ChromeMessage, Template } from './types';
 import { unifiedBrowser } from './src/utils/browser-polyfill';
 import OpenAI from 'openai';
 
