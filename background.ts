@@ -353,7 +353,7 @@ function push_cached_template(request: ChromeMessage): void {
         };
 
         if (request.id) {
-          await chrome.scripting.executeScript({
+          await unifiedBrowser.scripting.executeScript({
             target: { tabId: request.id },
             func,
             args: [xpath, html],
@@ -391,7 +391,7 @@ function push_cached_template(request: ChromeMessage): void {
         };
 
         if (request.id) {
-          await chrome.scripting.executeScript({
+          await unifiedBrowser.scripting.executeScript({
             target: { tabId: request.id },
             func,
             args: [xpath, html],
@@ -416,7 +416,7 @@ async function process_request(request: ChromeMessage): Promise<void> {
         Object.values(request.templates).map(template => template.name)
       );
 
-      const result = await chrome.scripting.executeScript({
+      const result = await unifiedBrowser.scripting.executeScript({
         target: { tabId: request.id },
         func: collect_content,
       });
@@ -437,10 +437,9 @@ async function process_request(request: ChromeMessage): Promise<void> {
     const obj: { [key: string]: Template } = {};
     obj['template_' + request.url] = request.template;
 
-    chrome.storage.local.set(obj, () => {
-      console.log('Template for', request.url, 'saved:', request.template);
-      push_cached_template(request);
-    });
+    await unifiedBrowser.storage.local.set(obj);
+    console.log('Template for', request.url, 'saved:', request.template);
+    push_cached_template(request);
   }
 
   if (request.action === 'clear-cache') {
@@ -454,107 +453,100 @@ async function process_request(request: ChromeMessage): Promise<void> {
     const obj: { [key: string]: string } = {};
     obj['openai'] = request.key;
 
-    chrome.storage.local.set(obj, () => {
-      console.log('OpenAI key set');
-    });
+    await unifiedBrowser.storage.local.set(obj);
+    console.log('OpenAI key set');
 
-    chrome.runtime.sendMessage({
+    unifiedBrowser.runtime.sendMessage({
       action: 'push_openai_to_popup',
       openai: request.key,
     });
   }
 
   if (request.action === 'setup_finished') {
-    chrome.storage.local.get('openai', (result: StorageResult) => {
-      let api_key = result['openai'];
+    const result = await unifiedBrowser.storage.local.get('openai');
+    let api_key = result['openai'];
 
-      if (typeof api_key === 'undefined') {
-        api_key = 'insert OpenAI API key';
-      }
+    if (typeof api_key === 'undefined') {
+      api_key = 'insert OpenAI API key';
+    }
 
-      chrome.runtime.sendMessage({
-        action: 'push_openai_to_popup',
-        openai: api_key,
-      });
+    unifiedBrowser.runtime.sendMessage({
+      action: 'push_openai_to_popup',
+      openai: api_key,
     });
   }
 
   if (request.action === 'generate') {
     if (!request.url || !request.id || !request.key) return;
 
-    chrome.runtime.sendMessage({
+    unifiedBrowser.runtime.sendMessage({
       action: 'generation_initialized',
     });
 
     try {
       const original = (await fetch_from_object_store(request.url, 'original')) as NodeData[];
 
-      chrome.storage.local.get(
-        ['template_' + request.url, 'openai'],
-        async (result: StorageResult) => {
-          const template = result['template_' + request.url] as Template;
-          if (template) {
-            const nodes: GeneratedNode[] = [];
+      const result = await unifiedBrowser.storage.local.get(['template_' + request.url, 'openai']);
+      const template = result['template_' + request.url] as Template;
+      if (template) {
+        const nodes: GeneratedNode[] = [];
 
-            for await (const node of generate(
-              original,
-              template,
-              result['openai'] as string,
-              request.key || ''
-            )) {
-              nodes.push(node);
-              const xpath = node.xpath;
-              const html = node.html;
+        for await (const node of generate(
+          original,
+          template,
+          result['openai'] as string,
+          request.key || ''
+        )) {
+          nodes.push(node);
+          const xpath = node.xpath;
+          const html = node.html;
 
-              const func = function (xpath: string, html: string) {
-                const node = document.evaluate(
-                  xpath,
-                  document,
-                  null,
-                  XPathResult.FIRST_ORDERED_NODE_TYPE,
-                  null
-                ).singleNodeValue as HTMLElement;
+          const func = function (xpath: string, html: string) {
+            const node = document.evaluate(
+              xpath,
+              document,
+              null,
+              XPathResult.FIRST_ORDERED_NODE_TYPE,
+              null
+            ).singleNodeValue as HTMLElement;
 
-                if (node) {
-                  node.innerHTML = html;
-                } else {
-                  console.log(`No element matches the provided XPath: ${xpath}`);
-                }
-              };
-
-              if (request.id) {
-                chrome.scripting.executeScript({
-                  target: { tabId: request.id },
-                  func,
-                  args: [xpath, html],
-                });
-              }
+            if (node) {
+              node.innerHTML = html;
+            } else {
+              console.log(`No element matches the provided XPath: ${xpath}`);
             }
+          };
 
-            if (nodes.length && request.url) {
-              await push_to_object_store(request.url, template.name, nodes);
-            }
-
-            console.log('Page rewritten!...');
-
-            chrome.storage.local.get(['template_' + request.url], async (result: StorageResult) => {
-              const storedTemplate = result['template_' + request.url] as Template;
-              if (storedTemplate) {
-                chrome.runtime.sendMessage({
-                  action: 'template_cached',
-                  template_name: storedTemplate.name,
-                });
-              }
+          if (request.id) {
+            unifiedBrowser.scripting.executeScript({
+              target: { tabId: request.id },
+              func,
+              args: [xpath, html],
             });
-
-            chrome.runtime.sendMessage({
-              action: 'generation_completed',
-            });
-          } else {
-            console.log('Cannot find required keys in local storage.');
           }
         }
-      );
+
+        if (nodes.length && request.url) {
+          await push_to_object_store(request.url, template.name, nodes);
+        }
+
+        console.log('Page rewritten!...');
+
+        const templateResult = await unifiedBrowser.storage.local.get(['template_' + request.url]);
+        const storedTemplate = templateResult['template_' + request.url] as Template;
+        if (storedTemplate) {
+          unifiedBrowser.runtime.sendMessage({
+            action: 'template_cached',
+            template_name: storedTemplate.name,
+          });
+        }
+
+        unifiedBrowser.runtime.sendMessage({
+          action: 'generation_completed',
+        });
+      } else {
+        console.log('Cannot find required keys in local storage.');
+      }
     } catch (error) {
       console.log('Error in processing:', error);
     }
@@ -564,10 +556,10 @@ async function process_request(request: ChromeMessage): Promise<void> {
 /**
  * Message listener for handling communication between extension components
  */
-chrome.runtime.onMessage.addListener(
+unifiedBrowser.runtime.onMessage.addListener(
   async (
     request: ChromeMessage,
-    _sender: chrome.runtime.MessageSender,
+    _sender: any,
     _sendResponse: (response?: unknown) => void
   ): Promise<boolean> => {
     await process_request(request);

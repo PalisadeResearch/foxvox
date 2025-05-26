@@ -53,7 +53,7 @@ function stopEmojiAnimation(): void {
  */
 export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
   return new Promise((resolve, reject) => {
-    fetch(unifiedBrowser.runtime.getURL('/config.json'))
+    fetch(unifiedBrowser.runtime.getURL('config.json'))
       .then(response => response.json())
       .then((data: Config) => {
         const templates = data.templates;

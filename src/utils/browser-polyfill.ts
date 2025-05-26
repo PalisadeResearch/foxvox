@@ -68,11 +68,30 @@ export const scripting = {
     if (isFirefox) {
       // Firefox uses tabs.executeScript for MV2
       const { target, func, args } = injection;
-      return browserAPI.tabs
-        .executeScript(target.tabId, {
-          code: `(${func?.toString()})(...${JSON.stringify(args || [])})`,
-        })
-        .then((result: any) => [{ result }]);
+      
+      // For Firefox, we need to handle function execution differently
+      if (func && args) {
+        // Create a self-executing function with the arguments
+        const code = `
+          (function() {
+            const func = ${func.toString()};
+            const args = ${JSON.stringify(args)};
+            return func.apply(null, args);
+          })();
+        `;
+        
+        return browserAPI.tabs
+          .executeScript(target.tabId, { code })
+          .then((result: any) => [{ result: result[0] }]);
+      } else if (func) {
+        // Just execute the function without arguments
+        const code = `(${func.toString()})()`;
+        return browserAPI.tabs
+          .executeScript(target.tabId, { code })
+          .then((result: any) => [{ result: result[0] }]);
+      } else {
+        throw new Error('Function is required for script execution');
+      }
     }
     // Chrome MV3 uses scripting.executeScript
     return new Promise(resolve => {
