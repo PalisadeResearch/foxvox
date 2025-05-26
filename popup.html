@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<head>
+    <title>FoxVox Rewriter</title>
+    <style>
+        body {
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            border-radius: 10px;
+        }
+        #container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 240px;
+            box-sizing: border-box;
+        }
+        #header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        #header img {
+            height: 30px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: left;
+        }
+        .radio-container {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .radio-container input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #9e01ac;
+            border-radius: 50%;
+            outline: none;
+            margin-right: 10px;
+            margin-top: 0px;
+            cursor: pointer;
+            position: relative;
+        }
+        .radio-container input[type="radio"]:checked::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background-color: #9e01ac;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .radio-container label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        button {
+            background-color: #9e01ac;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 0px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #870291;
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <div id="header">
+        <img src="icons/FoxVox.svg" alt="FoxVox Icon">
+    </div>
+    <h2>Choose agenda:</h2>
+    <div id="radio-container" class="radio-container"></div>
+    <h2>You are using limited community key by default. If needed, insert your own key below:</h2>
+    <div id="api-key-form">
+        <label for="openAIKey"></label>
+        <input type="text" id="openAIKey" name="openAIKey">
+        <p id="status"></p>
+    </div>
+    <button id="generate-button">Rewrite the website!</button>
+</div>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

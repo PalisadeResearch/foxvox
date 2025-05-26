@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "FoxVox",
+  "version": "3.1",
+  "description": "Provided with OpenAI API key, rewrites any website to look like something else!",
+  "permissions": ["storage", "tabs", "webNavigation", "scripting", "activeTab"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "dist/background.bundle.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["config.json"],
+      "matches": ["<all_urls>"],
+      "extension_ids": ["*"]
+    }
+  ]
+}

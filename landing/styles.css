@@ -1,0 +1,225 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    flex-wrap: wrap;
+}
+
+.link-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    /* Adjust this value as needed */
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    width: 64px;
+    height: 64px;
+    margin-right: 1rem;
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+.header-button {
+    width: 28px;
+    /* Adjust the size as needed */
+    height: 28px;
+    /* Adjust the size as needed */
+    vertical-align: middle;
+}
+
+.cta-button img {
+    vertical-align: middle;
+}
+
+header .subtitle {
+    margin-top: 1rem;
+    margin-block-end: 0;
+    font-size: 1.2rem;
+    font-style: italic;
+}
+
+header .cta-button {
+    display: flex;
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    color: #4CAF50;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    border: 2px solid #4CAF50;
+    margin-top: 1rem;
+    align-items: center;
+    text-align: center;
+}
+
+
+header .cta-button:hover {
+    background-color: #4CAF50;
+    color: #fff;
+}
+
+main {
+    padding: 2rem;
+}
+
+h1,
+h2 {
+    color: #333;
+    text-align: center;
+}
+
+section {
+    background: white;
+    margin: 1rem auto;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+}
+
+ul,
+ol {
+    padding-left: 2rem;
+}
+
+ul li,
+ol li {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.juxtapose {
+    margin-bottom: 2rem;
+    max-width: 100%;
+}
+
+nav .toc {
+    display: flex; /* Add flex display to allow list items to line up flow */
+    flex-wrap: wrap; /* Ensure the list can wrap into next line when content is too wide */
+    justify-content: space-evenly; /* Distribute items evenly */
+    list-style-type: none; /* No bullet points */
+    padding: 0;
+    margin: 1rem auto 2rem auto;
+    max-width: 800px;
+    text-align: center;
+}
+
+nav .toc li {
+    display: inline-flex; /* Change to inline-flex */
+    margin: 0 1rem;
+    white-space: nowrap; /* Prevent breaking lines within <li> */
+}
+
+/* Add "|" in between list items */
+nav .toc li:not(:last-child):after {
+    content: '|';
+    padding-left: 10px;
+}
+
+nav .toc a {
+    color: black;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+nav .toc a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 1rem;
+        flex-direction: column;
+    }
+
+    .header-content {
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        margin-right: 0.5rem;
+    }
+
+    header h1 {
+        font-size: 2rem;
+        text-align: center;
+    }
+
+    header .cta-button {
+        margin-top: 0.5rem;
+    }
+
+    section {
+        padding: 1rem;
+    }
+}
+
+div.jx-control {
+    background-color: black;
+}
+
+.vertical div.jx-control {
+    background-color: black;
+}
+
+div.jx-controller {
+    background-color: black;
+}
+
+.vertical div.jx-controller {
+    background-color: black;
+}
+
+div.jx-arrow.jx-left {
+    border-color: transparent black transparent transparent;
+}
+
+div.jx-arrow.jx-right {
+    border-color: transparent transparent transparent black;
+}
+
+.vertical div.jx-arrow.jx-left {
+    border-color: transparent transparent black transparent;
+}
+
+.vertical div.jx-arrow.jx-right {
+    border-color: black transparent transparent transparent;
+}
