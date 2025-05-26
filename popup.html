@@ -96,6 +96,31 @@
       button:hover {
         background-color: #870291;
       }
+      #settings-status {
+        margin-bottom: 15px;
+      }
+      #settings-info {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+      #settings-info p {
+        margin: 5px 0;
+        color: #555;
+      }
+      #settings-info span {
+        font-weight: bold;
+        color: #333;
+      }
+      #settings-button {
+        background-color: #6c757d;
+        margin-bottom: 10px;
+      }
+      #settings-button:hover {
+        background-color: #5a6268;
+      }
     </style>
   </head>
   <body>
@@ -105,11 +130,14 @@
       </div>
       <h2>Choose agenda:</h2>
       <div id="radio-container" class="radio-container"></div>
-      <h2>You are using limited community key by default. If needed, insert your own key below:</h2>
-      <div id="api-key-form">
-        <label for="openAIKey"></label>
-        <input type="text" id="openAIKey" name="openAIKey" />
-        <p id="status"></p>
+      <div id="settings-status">
+        <h2>Settings:</h2>
+        <div id="settings-info">
+          <p id="api-status">🔑 API Key: <span id="api-key-status">Not configured</span></p>
+          <p id="model-status">🤖 Model: <span id="current-model">Default</span></p>
+          <p id="prompt-status">📝 Custom Prompt: <span id="custom-prompt-status">None</span></p>
+        </div>
+        <button id="settings-button" type="button">⚙️ Open Settings</button>
       </div>
       <button id="generate-button">Rewrite the website!</button>
     </div>

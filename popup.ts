@@ -1,4 +1,4 @@
-import { PopupState, Template, Config, ChromeMessage } from './types';
+import { PopupState, Template, Config, ChromeMessage, UserSettings } from './types';
 import { unifiedBrowser } from './src/utils/browser-polyfill';
 
 /**
@@ -7,6 +7,56 @@ import { unifiedBrowser } from './src/utils/browser-polyfill';
 async function getActiveTab(): Promise<chrome.tabs.Tab> {
   const tabs = await unifiedBrowser.tabs.query({ active: true, currentWindow: true });
   return tabs[0];
+}
+
+/**
+ * Loads and displays current user settings status
+ */
+async function loadSettingsStatus(): Promise<void> {
+  try {
+    const result = await unifiedBrowser.storage.local.get('userSettings');
+    const userSettings: UserSettings = result.userSettings;
+
+    const apiKeyStatus = document.getElementById('api-key-status') as HTMLSpanElement;
+    const currentModel = document.getElementById('current-model') as HTMLSpanElement;
+    const customPromptStatus = document.getElementById('custom-prompt-status') as HTMLSpanElement;
+
+    if (userSettings && userSettings.apiKey) {
+      apiKeyStatus.textContent = userSettings.apiKey.startsWith('sk-')
+        ? 'Configured ✅'
+        : 'Invalid ❌';
+      currentModel.textContent = userSettings.model || 'gpt-4o';
+      customPromptStatus.textContent = userSettings.customPrompt ? 'Set ✅' : 'None';
+    } else {
+      apiKeyStatus.textContent = 'Not configured ❌';
+      currentModel.textContent = 'Default (gpt-4o)';
+      customPromptStatus.textContent = 'None';
+    }
+  } catch (error) {
+    console.error('Error loading settings status:', error);
+  }
+}
+
+/**
+ * Opens the extension settings page
+ */
+async function openSettings(): Promise<void> {
+  try {
+    // Try Chrome's openOptionsPage first
+    if (typeof chrome !== 'undefined' && chrome.runtime.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    } else if (typeof browser !== 'undefined' && browser.tabs.create) {
+      // Fallback for Firefox - create a new tab with options page
+      await browser.tabs.create({ url: browser.runtime.getURL('options.html') });
+    } else {
+      // Final fallback - use window.open
+      window.open(unifiedBrowser.runtime.getURL('options.html'), '_blank');
+    }
+  } catch (error) {
+    console.error('Error opening settings:', error);
+    // Final fallback - use window.open
+    window.open(unifiedBrowser.runtime.getURL('options.html'), '_blank');
+  }
 }
 
 let generate_button_state: PopupState = {
@@ -133,41 +183,48 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
 
         const generateButton = document.getElementById('generate-button') as HTMLButtonElement;
         generateButton.addEventListener('click', async () => {
-          function decodeBase64(str: string): string {
-            return decodeURIComponent(
-              atob(str)
-                .split('')
-                .map(c => {
-                  return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                })
-                .join('')
-            );
-          }
+          // Check if user has configured their settings
+          const settingsResult = await unifiedBrowser.storage.local.get('userSettings');
+          const userSettings: UserSettings = settingsResult.userSettings;
 
-          unifiedBrowser.runtime.sendMessage({
-            action: 'generate',
-            id: tab.id,
-            url: url.hostname + url.pathname,
-            key: decodeBase64(data.api.key),
-          } as ChromeMessage);
+          if (!userSettings || !userSettings.apiKey) {
+            // If no user settings, fall back to config.json key
+            function decodeBase64(str: string): string {
+              return decodeURIComponent(
+                atob(str)
+                  .split('')
+                  .map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                  })
+                  .join('')
+              );
+            }
+
+            unifiedBrowser.runtime.sendMessage({
+              action: 'generate',
+              id: tab.id,
+              url: url.hostname + url.pathname,
+              key: decodeBase64(data.api.key),
+            } as ChromeMessage);
+          } else {
+            // Use user settings
+            unifiedBrowser.runtime.sendMessage({
+              action: 'generate',
+              id: tab.id,
+              url: url.hostname + url.pathname,
+              key: '', // Background will use user settings instead
+            } as ChromeMessage);
+          }
         });
 
-        const openAIKeyInput = document.getElementById('openAIKey') as HTMLInputElement;
-        openAIKeyInput.addEventListener('input', () => {
-          let openAIKeyValue = openAIKeyInput.value;
-
-          if (openAIKeyValue === 'undefined' || openAIKeyValue === '') {
-            openAIKeyValue = 'insert your own OpenAI API key';
-          }
-
-          console.log('Setting new openAI key...' + openAIKeyValue);
-
-          unifiedBrowser.runtime.sendMessage({
-            action: 'push_openai_to_background',
-            key: openAIKeyValue,
-            url: url.hostname + url.pathname,
-          } as ChromeMessage);
+        // Add settings button event listener
+        const settingsButton = document.getElementById('settings-button') as HTMLButtonElement;
+        settingsButton.addEventListener('click', () => {
+          openSettings();
         });
+
+        // Load and display current settings status
+        loadSettingsStatus();
 
         resolve();
       })
@@ -197,12 +254,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           stopEmojiAnimation();
           console.log('Generation completed');
         }
-        if (message.action === 'push_openai_to_popup') {
-          console.log('OpenAI set!: ' + message.openai);
-          const openAIKeyInput = document.getElementById('openAIKey') as HTMLInputElement;
-          if (openAIKeyInput && message.openai) {
-            openAIKeyInput.value = message.openai;
-          }
+        if (message.action === 'settings_updated') {
+          // Reload settings status when settings are updated
+          loadSettingsStatus();
         }
         if (message.action === 'close_popup') {
           window.close();
