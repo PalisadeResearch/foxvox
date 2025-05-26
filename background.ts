@@ -463,11 +463,15 @@ async function process_request(request: ChromeMessage): Promise<void> {
   }
 
   if (request.action === 'generate') {
-    if (!request.url || !request.id || !request.key) return;
+    if (!request.url || !request.id) return;
 
-    unifiedBrowser.runtime.sendMessage({
-      action: 'generation_initialized',
-    });
+    try {
+      unifiedBrowser.runtime.sendMessage({
+        action: 'generation_initialized',
+      });
+    } catch (error) {
+      console.log('Could not send generation_initialized message:', error);
+    }
 
     try {
       const original = (await fetch_from_object_store(request.url, 'original')) as NodeData[];
@@ -525,20 +529,42 @@ async function process_request(request: ChromeMessage): Promise<void> {
         const templateResult = await unifiedBrowser.storage.local.get(['template_' + request.url]);
         const storedTemplate = templateResult['template_' + request.url] as Template;
         if (storedTemplate) {
-          unifiedBrowser.runtime.sendMessage({
-            action: 'template_cached',
-            template_name: storedTemplate.name,
-          });
+          try {
+            unifiedBrowser.runtime.sendMessage({
+              action: 'template_cached',
+              template_name: storedTemplate.name,
+            });
+          } catch (error) {
+            console.log('Could not send template_cached message:', error);
+          }
         }
 
-        unifiedBrowser.runtime.sendMessage({
-          action: 'generation_completed',
-        });
+        try {
+          unifiedBrowser.runtime.sendMessage({
+            action: 'generation_completed',
+          });
+        } catch (error) {
+          console.log('Could not send generation_completed message:', error);
+        }
       } else {
         console.log('Cannot find required keys in local storage.');
+        try {
+          unifiedBrowser.runtime.sendMessage({
+            action: 'generation_completed',
+          });
+        } catch (msgError) {
+          console.log('Could not send generation_completed message:', msgError);
+        }
       }
     } catch (error) {
       console.log('Error in processing:', error);
+      try {
+        unifiedBrowser.runtime.sendMessage({
+          action: 'generation_completed',
+        });
+      } catch (msgError) {
+        console.log('Could not send generation_completed message:', msgError);
+      }
     }
   }
 }

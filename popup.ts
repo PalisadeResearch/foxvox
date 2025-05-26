@@ -76,15 +76,29 @@ if (loadedState) {
  */
 function startEmojiAnimation(): void {
   const generateButton = document.getElementById('generate-button') as HTMLButtonElement;
+  if (!generateButton) {
+    console.error('Generate button not found');
+    return;
+  }
+
+  // Clear any existing interval
+  if (generate_button_state.emojiInterval) {
+    clearInterval(generate_button_state.emojiInterval);
+  }
+
   generate_button_state.isGenerating = true;
   const emoji = ['🦊', '🦊 🦊', '🦊 🦊 🦊'];
 
   generate_button_state.emojiInterval = window.setInterval(() => {
-    generateButton.innerText = `Generating... ${emoji[generate_button_state.currentEmojiIndex]}`;
-    generate_button_state.currentEmojiIndex =
-      (generate_button_state.currentEmojiIndex + 1) % emoji.length;
-    localStorage.setItem('state', JSON.stringify(generate_button_state));
+    if (generateButton) {
+      generateButton.innerText = `Generating... ${emoji[generate_button_state.currentEmojiIndex]}`;
+      generate_button_state.currentEmojiIndex =
+        (generate_button_state.currentEmojiIndex + 1) % emoji.length;
+      localStorage.setItem('state', JSON.stringify(generate_button_state));
+    }
   }, 500);
+
+  console.log('Started emoji animation');
 }
 
 /**
@@ -92,10 +106,20 @@ function startEmojiAnimation(): void {
  */
 function stopEmojiAnimation(): void {
   const generateButton = document.getElementById('generate-button') as HTMLButtonElement;
+  if (!generateButton) {
+    console.error('Generate button not found');
+    return;
+  }
+
   generate_button_state.isGenerating = false;
-  clearInterval(generate_button_state.emojiInterval);
+  if (generate_button_state.emojiInterval) {
+    clearInterval(generate_button_state.emojiInterval);
+    generate_button_state.emojiInterval = 0;
+  }
   generateButton.innerText = 'Rewrite the website!';
   localStorage.setItem('state', JSON.stringify(generate_button_state));
+
+  console.log('Stopped emoji animation');
 }
 
 /**
@@ -183,11 +207,16 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
 
         const generateButton = document.getElementById('generate-button') as HTMLButtonElement;
         generateButton.addEventListener('click', async () => {
+          console.log('Generate button clicked');
+
           // Check if user has configured their settings
           const settingsResult = await unifiedBrowser.storage.local.get('userSettings');
           const userSettings: UserSettings = settingsResult.userSettings;
 
+          console.log('User settings:', userSettings);
+
           if (!userSettings || !userSettings.apiKey) {
+            console.log('Using fallback config.json key');
             // If no user settings, fall back to config.json key
             function decodeBase64(str: string): string {
               return decodeURIComponent(
@@ -200,20 +229,27 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
               );
             }
 
-            unifiedBrowser.runtime.sendMessage({
+            const message = {
               action: 'generate',
               id: tab.id,
               url: url.hostname + url.pathname,
               key: decodeBase64(data.api.key),
-            } as ChromeMessage);
+            } as ChromeMessage;
+
+            console.log('Sending message with fallback key:', message);
+            unifiedBrowser.runtime.sendMessage(message);
           } else {
+            console.log('Using user settings');
             // Use user settings
-            unifiedBrowser.runtime.sendMessage({
+            const message = {
               action: 'generate',
               id: tab.id,
               url: url.hostname + url.pathname,
-              key: '', // Background will use user settings instead
-            } as ChromeMessage);
+              key: userSettings.apiKey, // Send the user's API key
+            } as ChromeMessage;
+
+            console.log('Sending message with user settings:', message);
+            unifiedBrowser.runtime.sendMessage(message);
           }
         });
 
@@ -246,19 +282,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   setup(tab, url).then(async () => {
     unifiedBrowser.runtime.onMessage.addListener(
       (message: ChromeMessage, _sender: unknown, _sendResponse: (response?: unknown) => void) => {
+        console.log('Popup received message:', message);
+
         if (message.action === 'generation_initialized') {
+          console.log('Generation initialized - starting animation');
           startEmojiAnimation();
-          console.log('Generation initialized');
         }
         if (message.action === 'generation_completed') {
+          console.log('Generation completed - stopping animation');
           stopEmojiAnimation();
-          console.log('Generation completed');
         }
         if (message.action === 'settings_updated') {
-          // Reload settings status when settings are updated
+          console.log('Settings updated - reloading status');
           loadSettingsStatus();
         }
         if (message.action === 'close_popup') {
+          console.log('Closing popup');
           window.close();
         }
       }
