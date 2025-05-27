@@ -496,11 +496,16 @@ async function process_request(request: ChromeMessage): Promise<void> {
     if (!request.url || !request.id) return;
 
     try {
-      unifiedBrowser.runtime.sendMessage({
-        action: 'generation_initialized',
-      });
+      // Send message with error handling
+      try {
+        await unifiedBrowser.runtime.sendMessage({
+          action: 'generation_initialized',
+        });
+      } catch (error) {
+        console.log('Could not send generation_initialized message (popup may be closed):', error);
+      }
     } catch (error) {
-      console.log('Could not send generation_initialized message:', error);
+      console.log('Error sending generation_initialized:', error);
     }
 
     try {
@@ -560,40 +565,43 @@ async function process_request(request: ChromeMessage): Promise<void> {
         const storedTemplate = templateResult['template_' + request.url] as Template;
         if (storedTemplate) {
           try {
-            unifiedBrowser.runtime.sendMessage({
+            await unifiedBrowser.runtime.sendMessage({
               action: 'template_cached',
               template_name: storedTemplate.name,
             });
           } catch (error) {
-            console.log('Could not send template_cached message:', error);
+            console.log('Could not send template_cached message (popup may be closed):', error);
           }
         }
 
         try {
-          unifiedBrowser.runtime.sendMessage({
+          await unifiedBrowser.runtime.sendMessage({
             action: 'generation_completed',
           });
         } catch (error) {
-          console.log('Could not send generation_completed message:', error);
+          console.log('Could not send generation_completed message (popup may be closed):', error);
         }
       } else {
         console.log('Cannot find required keys in local storage.');
         try {
-          unifiedBrowser.runtime.sendMessage({
+          await unifiedBrowser.runtime.sendMessage({
             action: 'generation_completed',
           });
         } catch (msgError) {
-          console.log('Could not send generation_completed message:', msgError);
+          console.log(
+            'Could not send generation_completed message (popup may be closed):',
+            msgError
+          );
         }
       }
     } catch (error) {
       console.log('Error in processing:', error);
       try {
-        unifiedBrowser.runtime.sendMessage({
+        await unifiedBrowser.runtime.sendMessage({
           action: 'generation_completed',
         });
       } catch (msgError) {
-        console.log('Could not send generation_completed message:', msgError);
+        console.log('Could not send generation_completed message (popup may be closed):', msgError);
       }
     }
   }

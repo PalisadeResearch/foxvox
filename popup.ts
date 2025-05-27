@@ -237,7 +237,14 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
             } as ChromeMessage;
 
             console.log('Sending message with fallback key:', message);
-            unifiedBrowser.runtime.sendMessage(message);
+            try {
+              await unifiedBrowser.runtime.sendMessage(message);
+              console.log('Message sent successfully');
+            } catch (error) {
+              console.error('Error sending message:', error);
+              // Try to start animation anyway
+              startEmojiAnimation();
+            }
           } else {
             console.log('Using user settings');
             // Use user settings
@@ -249,7 +256,14 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
             } as ChromeMessage;
 
             console.log('Sending message with user settings:', message);
-            unifiedBrowser.runtime.sendMessage(message);
+            try {
+              await unifiedBrowser.runtime.sendMessage(message);
+              console.log('Message sent successfully');
+            } catch (error) {
+              console.error('Error sending message:', error);
+              // Try to start animation anyway
+              startEmojiAnimation();
+            }
           }
         });
 

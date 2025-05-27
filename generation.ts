@@ -10,77 +10,37 @@ function isNewGenerationModel(model: string): boolean {
 }
 
 /**
- * Determines if a model is a reasoning model
+ * Tool mapping for function calls
  */
-function isReasoningModel(model: string): boolean {
-  return model.startsWith('o3') || model.startsWith('o1') || model.startsWith('o4');
-}
+const toolMapping = {
+  output_rewritten_content: (args: { html: string }) => {
+    return args.html;
+  },
+};
 
 /**
- * Creates a completion request with proper function calling support for all models
+ * Execute function calls and return outputs
  */
-async function completion(
-  openai: OpenAI,
-  context: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-  userSettings: UserSettings
-): Promise<OpenAI.Chat.Completions.ChatCompletion> {
-  const isNewModel = isNewGenerationModel(userSettings.model);
+function executeFunctionCalls(functionCalls: any[]): any[] {
+  return functionCalls.map(functionCall => {
+    const toolFunction = toolMapping[functionCall.name as keyof typeof toolMapping];
+    if (!toolFunction) {
+      throw new Error(`No tool found for function call: ${functionCall.name}`);
+    }
 
-  // Base configuration with function calling (supported by all models including reasoning models)
-  const baseConfig: any = {
-    model: userSettings.model,
-    messages: context,
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: 'output_rewritten_content',
-          description: 'Output the rewritten HTML content according to the template instructions',
-          parameters: {
-            type: 'object',
-            properties: {
-              html: {
-                type: 'string',
-                description: 'The rewritten HTML content',
-              },
-            },
-            required: ['html'],
-            additionalProperties: false,
-          },
-        },
-      },
-    ],
-    tool_choice: 'required',
-  };
+    const arguments_ = JSON.parse(functionCall.arguments);
+    const toolOutput = toolFunction(arguments_);
 
-  // Handle token limits based on model type
-  if (isNewModel) {
-    // New models use max_completion_tokens
-    baseConfig.max_completion_tokens = userSettings.maxTokens;
-  } else {
-    // Legacy models use max_tokens
-    baseConfig.max_tokens = userSettings.maxTokens;
-  }
-
-  // For reasoning models, add reasoning configuration if available
-  if (isReasoningModel(userSettings.model)) {
-    // Note: reasoning configuration might be available in future API versions
-    // baseConfig.reasoning = { effort: "medium", summary: "auto" };
-    console.log('Using reasoning model with function calling:', userSettings.model);
-  }
-
-  console.log('API request config:', {
-    model: baseConfig.model,
-    hasTools: !!baseConfig.tools,
-    tokenParam: isNewModel ? 'max_completion_tokens' : 'max_tokens',
-    isReasoning: isReasoningModel(userSettings.model),
+    return {
+      type: 'function_call_output',
+      call_id: functionCall.call_id,
+      output: toolOutput,
+    };
   });
-
-  return openai.chat.completions.create(baseConfig);
 }
 
 /**
- * Chain of Thought algorithm for content generation
+ * Content generation using Responses API with proper function calling support
  * @param userSettings - User settings including API key, model, and custom prompt
  * @param template - Template configuration for generation
  * @param original - Original HTML content to transform
@@ -95,8 +55,7 @@ export async function CoT(
     console.log('Initializing OpenAI with user settings...');
     const openai = new OpenAI({ apiKey: userSettings.apiKey, dangerouslyAllowBrowser: true });
 
-    console.log('OpenAI initialized.');
-    console.log('Starting chain of thought algorithm...');
+    console.log('Starting Responses API generation with function calling...');
 
     // Combine template generation with custom prompt if provided
     let systemContent = template.generation;
@@ -104,96 +63,157 @@ export async function CoT(
       systemContent += `\n\nAdditional custom instructions: ${userSettings.customPrompt}`;
     }
 
-    const system_message: OpenAI.Chat.Completions.ChatCompletionSystemMessageParam = {
-      role: 'system',
-      content: systemContent,
+    // Prepare model configuration with proper token parameter
+    const isNewModel = isNewGenerationModel(userSettings.model);
+    const modelConfig: any = {
+      model: userSettings.model,
+      tools: [
+        {
+          type: 'function',
+          name: 'output_rewritten_content',
+          description: 'Output the rewritten HTML content according to the template instructions',
+          parameters: {
+            type: 'object',
+            properties: {
+              html: {
+                type: 'string',
+                description: 'The rewritten HTML content',
+              },
+            },
+            required: ['html'],
+            additionalProperties: false,
+          },
+        },
+      ],
     };
-    const original_message: OpenAI.Chat.Completions.ChatCompletionUserMessageParam = {
-      role: 'user',
-      content: original,
-    };
 
-    const isReasoning = isReasoningModel(userSettings.model);
+    // Handle token limits based on model type
+    if (isNewModel) {
+      modelConfig.max_completion_tokens = userSettings.maxTokens;
+    } else {
+      modelConfig.max_tokens = userSettings.maxTokens;
+    }
 
-    if (isReasoning) {
-      // For reasoning models, use a more direct approach
-      // They will reason internally and then call the function when ready
-      console.log('Using reasoning model - single completion with internal reasoning');
+    console.log('Model config:', {
+      model: modelConfig.model,
+      hasTools: !!modelConfig.tools,
+      tokenParam: isNewModel ? 'max_completion_tokens' : 'max_tokens',
+      maxTokens: userSettings.maxTokens,
+    });
 
-      const enhanced_message: OpenAI.Chat.Completions.ChatCompletionUserMessageParam = {
+    // Initialize conversation with system and user messages
+    const conversationInput = [
+      {
+        role: 'system',
+        content: systemContent,
+      },
+      {
         role: 'user',
         content: `${original}\n\nPlease rewrite this content according to the template instructions provided in the system message. Think through your approach carefully and call the output_rewritten_content function when you're ready with the final result.`,
-      };
+      },
+    ];
 
-      const completion_response = await completion(
-        openai,
-        [system_message, enhanced_message],
-        userSettings
-      );
+    let totalTokensUsed = 0;
+    let finalResult: string | null = null;
+    const conversationHistory = [...conversationInput];
 
-      const tool_call = completion_response.choices[0]?.message?.tool_calls?.[0];
-      if (!tool_call?.function?.arguments) {
-        throw new Error('No tool call arguments received from reasoning model');
+    // Main response loop - continue until we get a final message
+    while (true) {
+      console.log('Making Responses API call...');
+
+      const response = await openai.responses.create({
+        input: conversationHistory,
+        ...modelConfig,
+      });
+
+      totalTokensUsed += response.usage?.total_tokens || 0;
+
+      // Extract different response types
+      const reasoning = response.output?.filter((rx: any) => rx.type === 'reasoning') || [];
+      const functionCalls = response.output?.filter((rx: any) => rx.type === 'function_call') || [];
+      const messages = response.output?.filter((rx: any) => rx.type === 'message') || [];
+
+      console.log('Response breakdown:', {
+        reasoning: reasoning.length,
+        functionCalls: functionCalls.length,
+        messages: messages.length,
+        totalTokens: totalTokensUsed,
+        hasOutputText: !!response.output_text,
+      });
+
+      // If we have output_text directly, use it (for simpler cases)
+      if (response.output_text && !finalResult) {
+        console.log('Got direct output_text from response');
+        finalResult = response.output_text;
       }
 
-      const parsed = JSON.parse(tool_call.function.arguments);
-      return parsed.html;
-    } else {
-      // For traditional models, use Chain of Thought with two-step refinement
-      console.log('Using traditional model - Chain of Thought approach');
-
-      const first_completion = await completion(
-        openai,
-        [system_message, original_message],
-        userSettings
-      );
-
-      const tool_call = first_completion.choices[0]?.message?.tool_calls?.[0];
-      if (!tool_call?.function?.arguments) {
-        throw new Error('No tool call arguments received from first completion');
+      // Add reasoning steps to conversation history (preserve chain of thought)
+      if (reasoning.length > 0) {
+        console.log('Adding reasoning steps to conversation...');
+        conversationHistory.push(...reasoning.map((r: any) => r));
       }
 
-      const first_completion_message: OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam =
-        {
-          role: 'assistant',
-          content: first_completion.choices[0]?.message?.content || '',
-          tool_calls: first_completion.choices[0]?.message?.tool_calls,
-        };
+      // Handle function calls
+      if (functionCalls.length > 0) {
+        console.log(`Executing ${functionCalls.length} function call(s)...`);
 
-      const function_result_message: OpenAI.Chat.Completions.ChatCompletionToolMessageParam = {
-        role: 'tool',
-        content: tool_call.function.arguments,
-        tool_call_id: tool_call.id,
-      };
+        // Add function calls to conversation
+        conversationHistory.push(...functionCalls.map((fc: any) => fc));
 
-      const final_user_message: OpenAI.Chat.Completions.ChatCompletionUserMessageParam = {
-        role: 'user',
-        content:
-          "Carefully review your result. Make sure it adheres to all requirements, fix any issues, and improve the quality. When you're satisfied with the result, call the output_rewritten_content function again with your final version.",
-      };
+        // Execute functions and get outputs
+        const functionOutputs = executeFunctionCalls(functionCalls);
 
-      const final_completion = await completion(
-        openai,
-        [
-          system_message,
-          original_message,
-          first_completion_message,
-          function_result_message,
-          final_user_message,
-        ],
-        userSettings
-      );
+        // Add function outputs to conversation
+        conversationHistory.push(...functionOutputs);
 
-      const final_tool_call = final_completion.choices[0]?.message?.tool_calls?.[0];
-      if (!final_tool_call?.function?.arguments) {
-        throw new Error('No tool call arguments received from final completion');
+        // Check if any function call was for our target function
+        for (const functionCall of functionCalls) {
+          const fc = functionCall as any; // Cast to access properties
+          if (fc.name === 'output_rewritten_content') {
+            const args = JSON.parse(fc.arguments);
+            finalResult = args.html;
+            console.log('Received final HTML result from function call');
+          }
+        }
+
+        // Continue the loop to let the model process the function outputs
+        continue;
       }
 
-      const final = JSON.parse(final_tool_call.function.arguments);
-      return final.html;
+      // Handle final messages
+      if (messages.length > 0) {
+        console.log('Received final message(s), ending conversation...');
+        conversationHistory.push(...messages.map((m: any) => m));
+
+        // If we have a result from function calls, use that
+        if (finalResult) {
+          break;
+        }
+
+        // Otherwise, try to extract result from message content
+        const messageContent = (messages[0] as any)?.content;
+        if (messageContent && typeof messageContent === 'string') {
+          finalResult = messageContent;
+        }
+        break;
+      }
+
+      // If no function calls and no messages, something went wrong
+      if (functionCalls.length === 0 && messages.length === 0) {
+        console.warn('No function calls or messages in response, ending loop...');
+        break;
+      }
     }
+
+    console.log(`Generation completed. Total tokens used: ${totalTokensUsed}`);
+
+    if (!finalResult) {
+      throw new Error('No valid result received from the model');
+    }
+
+    return finalResult;
   } catch (error) {
-    console.error('Error occurred during CoT: ', error);
+    console.error('Error occurred during Responses API generation:', error);
     return null;
   }
 }
