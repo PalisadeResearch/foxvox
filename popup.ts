@@ -213,8 +213,6 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
           const settingsResult = await unifiedBrowser.storage.local.get('userSettings');
           const userSettings: UserSettings = settingsResult.userSettings;
 
-          console.log('User settings:', userSettings);
-
           if (!userSettings || !userSettings.apiKey) {
             console.log('Using fallback config.json key');
             // If no user settings, fall back to config.json key
@@ -236,7 +234,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
               key: decodeBase64(data.api.key),
             } as ChromeMessage;
 
-            console.log('Sending message with fallback key:', message);
+            console.log('Sending generation request with fallback settings');
             unifiedBrowser.runtime.sendMessage(message);
           } else {
             console.log('Using user settings');
@@ -248,7 +246,7 @@ export function setup(tab: chrome.tabs.Tab, url: URL): Promise<void> {
               key: userSettings.apiKey, // Send the user's API key
             } as ChromeMessage;
 
-            console.log('Sending message with user settings:', message);
+            console.log('Sending generation request with user settings');
             unifiedBrowser.runtime.sendMessage(message);
           }
         });
